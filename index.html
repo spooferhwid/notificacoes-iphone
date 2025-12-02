@@ -3,24 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Gerador de Notificações iPhone</title>
-
-  <!-- Ícone da tela inicial -->
-  <link rel="apple-touch-icon" sizes="180x180" href="icon1.png">
-
-  <!-- favicon -->
-  <link rel="icon" href="favicon.ico">
-
-  <!-- Manifest -->
-  <link rel="manifest" href="manifest.json">
-
-  <!-- REMOVIDO: apple-mobile-web-app-title -->
-  <!-- <meta name="apple-mobile-web-app-title" content="Notificações"> -->
-
-  <meta name="theme-color" content="#000000">
+  <title>Nubank</title>
 
   <style>
-    body { font-family: Arial, sans-serif; max-width: 500px; margin: 20px auto; padding: 20px; }
+    body { font-family: Arial; max-width: 500px; margin: 20px auto; padding: 20px; }
     input, select { width:100%; padding:10px; margin:10px 0; }
     button { width:100%; padding:12px; background:black; color:white; border:none; cursor:pointer; }
   </style>
@@ -35,62 +21,40 @@
 <label>Corpo da Notificação</label>
 <input id="bodyInput" value="Recebemos sua transferência de R$ 19.000,00." />
 
-<label>Ícone (atalho)</label>
+<label>Ícone da notificação</label>
 <select id="iconSelect">
-  <option value="icon1.png">Nubank (icon1.png)</option>
+  <option value="icon1.png">Nubank</option>
 </select>
 
-<label>Quantas notificações?</label>
+<label>Quantidade</label>
 <input id="amountInput" type="number" value="1" min="1" />
 
-<label>Tempo entre notificações (ms)</label>
+<label>Delay (ms)</label>
 <input id="delayInput" type="number" value="1000" />
 
 <button id="permBtn">Permitir Notificações</button>
 <button id="sendBtn">Gerar Notificações</button>
 
 <script>
-  // registra SW
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js', { scope: './' })
-      .then(() => console.log('SW registrado'))
-      .catch(err => console.error('SW erro', err));
-  }
+document.getElementById('permBtn').addEventListener('click', async () => {
+  const perm = await Notification.requestPermission();
+  alert(perm === 'granted' ? 'Permitido!' : 'Negado: ' + perm);
+});
 
-  document.getElementById('permBtn').addEventListener('click', () => {
-    Notification.requestPermission().then(p => {
-      alert(p === 'granted' ? 'Permissão concedida!' : 'Permissão: ' + p);
-    });
-  });
+document.getElementById('sendBtn').addEventListener('click', () => {
+  const title = document.getElementById('titleInput').value;
+  const body = document.getElementById('bodyInput').value;
+  const icon = document.getElementById('iconSelect').value;
+  const total = parseInt(document.getElementById('amountInput').value, 10);
+  const delay = parseInt(document.getElementById('delayInput').value, 10);
 
-  document.getElementById('sendBtn').addEventListener('click', () => {
-    const title = document.getElementById('titleInput').value;
-    const body = document.getElementById('bodyInput').value;
-    const icon = document.getElementById('iconSelect').value;
-    const total = parseInt(document.getElementById('amountInput').value, 10) || 1;
-    const delay = parseInt(document.getElementById('delayInput').value, 10) || 1000;
-
-    if (!title || !body) {
-      alert('Preencha título e corpo');
-      return;
-    }
-
-    let count = 0;
-
-    const timer = setInterval(() => {
-      navigator.serviceWorker.ready.then(reg => {
-        reg.showNotification(title, {
-          body: body,
-          icon: icon,
-          badge: icon,
-          tag: 'custom-notif'
-        });
-      });
-
-      count++;
-      if (count >= total) clearInterval(timer);
-    }, delay);
-  });
+  let count = 0;
+  const timer = setInterval(() => {
+    new Notification(title, { body: body, icon: icon });
+    count++;
+    if (count >= total) clearInterval(timer);
+  }, delay);
+});
 </script>
 
 </body>
