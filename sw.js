@@ -1,3 +1,3 @@
-self.addEventListener("notificationclick", event => {
-  event.notification.close();
+self.addEventListener("notificationclick", function(e) {
+  e.notification.close();
 });
