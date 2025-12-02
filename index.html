@@ -1,12 +1,11 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Gerador de Notificações iPhone</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gerador de Notificações</title>
 
-  <!-- ICON DINÂMICO AQUI -->
-  <link id="dynamicIcon" rel="apple-touch-icon" href="icon-nubank.png">
+  <link rel="apple-touch-icon" id="appIcon" href="icon1.png">
 
   <style>
     body {
@@ -19,79 +18,80 @@
       width: 100%;
       padding: 10px;
       margin: 10px 0;
+      font-size: 16px;
     }
     button {
       width: 100%;
       padding: 14px;
       background: black;
       color: white;
-      font-size: 17px;
       border: none;
-      cursor: pointer;
-      margin-top: 10px;
+      font-size: 18px;
+      margin-top: 15px;
+      border-radius: 6px;
     }
-    .info {
-      padding: 10px;
-      background: #efefef;
+    .section {
+      padding: 15px;
       border-radius: 8px;
-      font-size: 15px;
-      margin-bottom: 20px;
+      background: #f4f4f4;
+      margin-bottom: 25px;
     }
   </style>
 </head>
 <body>
 
-  <h2>Gerar Notificação iPhone</h2>
+  <h2>Gerador de Notificações iPhone</h2>
 
-  <div class="info">
-    Escolha o ícone antes de adicionar o site à Tela Inicial.  
-    O iPhone usará esse ícone como ícone do app.
+  <div class="section">
+    <h3>1️⃣ Escolha o Ícone (App + Notificação)</h3>
+    <select id="iconSelect">
+      <option value="icon1.png">Nubank</option>
+      <option value="icon2.png">PicPay</option>
+      <option value="icon3.png">Instagram</option>
+    </select>
+
+    <button onclick="saveIcon()">Salvar Ícone</button>
+    <small>Depois de salvar, se quiser instalar na tela inicial, o ícone já estará correto.</small>
   </div>
 
-  <label>Ícone do App (Tela Inicial)</label>
-  <select id="iconSelector" onchange="changePwaIcon()">
-    <option value="icon1.png">Nubank</option>
-    <option value="icon2.png">PicPay</option>
-    <option value="icon3.png">Instagram</option>
-  </select>
+  <div class="section">
+    <h3>2️⃣ Conteúdo da Notificação</h3>
 
-  <hr>
+    <label>Título</label>
+    <input id="titleInput" value="Transferência recebida">
 
-  <label>Título</label>
-  <input id="titleInput" placeholder="Ex: Banco, Pix, Instagram..." />
+    <label>Corpo</label>
+    <input id="bodyInput" value="Recebemos sua transferência de R$ 19.000,00.">
 
-  <label>Corpo</label>
-  <input id="bodyInput" placeholder="Ex: Você recebeu R$ 1.200,00" />
+    <label>Quantidade</label>
+    <input id="amountInput" type="number" value="1" min="1">
 
-  <label>Ícone da Notificação</label>
-  <select id="notifIconSelector">
-    <option value="icon1.png">Nubank</option>
-    <option value="icon2.png">PicPay</option>
-    <option value="icon3.png">Instagram</option>
-  </select>
-
-  <label>Quantidade</label>
-  <input id="amountInput" type="number" value="1" min="1">
-
-  <label>Intervalo (ms)</label>
-  <input id="delayInput" type="number" value="1000">
+    <label>Delay entre notificações (ms)</label>
+    <input id="delayInput" type="number" value="1200">
+  </div>
 
   <button onclick="requestPermission()">Permitir Notificações</button>
   <button onclick="sendCustom()">Gerar Notificações</button>
 
   <script>
-
-    // Troca o ícone do PWA ANTES do usuário instalar na tela inicial
-    function changePwaIcon() {
-      const selected = document.getElementById("iconSelector").value;
-      const link = document.getElementById("dynamicIcon");
-      link.href = selected;
-
-      alert("Ícone alterado! Agora adicione o site à Tela Inicial.");
-    }
-
+    // Registra SW
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("sw.js");
+    }
+
+    // SALVAR ICONE NA <apple-touch-icon>
+    function saveIcon() {
+      const icon = document.getElementById("iconSelect").value;
+      document.getElementById("appIcon").setAttribute("href", icon);
+      localStorage.setItem("siteIcon", icon);
+      alert("Ícone salvo! (Se instalar na Tela Inicial, ele será usado)");
+    }
+
+    // Carregar ícone salvo ao abrir
+    const savedIcon = localStorage.getItem("siteIcon");
+    if (savedIcon) {
+      document.getElementById("appIcon").href = savedIcon;
+      document.getElementById("iconSelect").value = savedIcon;
     }
 
     function requestPermission() {
@@ -103,29 +103,29 @@
     function sendCustom() {
       const title = document.getElementById("titleInput").value;
       const body = document.getElementById("bodyInput").value;
-      const icon = document.getElementById("notifIconSelector").value;
+      const icon = document.getElementById("iconSelect").value;
       const total = parseInt(document.getElementById("amountInput").value);
       const delay = parseInt(document.getElementById("delayInput").value);
 
-      if (!title || !body) {
-        alert("Preencha título e corpo!");
+      if (Notification.permission !== "granted") {
+        alert("Você precisa permitir as notificações primeiro.");
         return;
       }
 
       let count = 0;
-      const loop = setInterval(() => {
+      const interval = setInterval(() => {
         navigator.serviceWorker.ready.then(reg => {
           reg.showNotification(title, {
             body: body,
-            icon: icon,
+            icon: icon
           });
         });
 
         count++;
-        if (count >= total) clearInterval(loop);
+        if (count >= total) clearInterval(interval);
+
       }, delay);
     }
   </script>
-
 </body>
 </html>
