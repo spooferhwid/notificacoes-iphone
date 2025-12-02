@@ -1,11 +1,9 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Gerador de Notificações</title>
-
-  <link rel="apple-touch-icon" id="appIcon" href="icon1.png">
 
   <style>
     body {
@@ -14,106 +12,87 @@
       margin: 20px auto;
       padding: 20px;
     }
+
     input, select {
       width: 100%;
       padding: 10px;
       margin: 10px 0;
-      font-size: 16px;
     }
+
     button {
       width: 100%;
       padding: 14px;
       background: black;
       color: white;
       border: none;
+      cursor: pointer;
       font-size: 18px;
-      margin-top: 15px;
-      border-radius: 6px;
-    }
-    .section {
-      padding: 15px;
       border-radius: 8px;
-      background: #f4f4f4;
-      margin-bottom: 25px;
+      margin-top: 15px;
+    }
+
+    h2 {
+      margin-bottom: 5px;
     }
   </style>
 </head>
 <body>
 
-  <h2>Gerador de Notificações iPhone</h2>
+  <h2>Gerar Notificação iPhone</h2>
 
-  <div class="section">
-    <h3>1️⃣ Escolha o Ícone (App + Notificação)</h3>
-    <select id="iconSelect">
-      <option value="icon1.png">Nubank</option>
-      <option value="icon2.png">PicPay</option>
-      <option value="icon3.png">Instagram</option>
-    </select>
+  <label>Ícone da Notificação</label>
+  <select id="iconSelect">
+    <option value="icon1.png">Nubank</option>
+    <option value="icon2.png">PicPay</option>
+    <option value="icon3.png">Insta</option>
+  </select>
 
-    <button onclick="saveIcon()">Salvar Ícone</button>
-    <small>Depois de salvar, se quiser instalar na tela inicial, o ícone já estará correto.</small>
-  </div>
+  <label>Título</label>
+  <input id="titleInput" placeholder="Ex: Transferência recebida" />
 
-  <div class="section">
-    <h3>2️⃣ Conteúdo da Notificação</h3>
+  <label>Corpo da Notificação</label>
+  <input id="bodyInput" placeholder="Ex: Recebemos sua transferência de R$ 19.000,00." />
 
-    <label>Título</label>
-    <input id="titleInput" value="Transferência recebida">
+  <label>Quantidade</label>
+  <input id="amountInput" type="number" value="1" min="1" />
 
-    <label>Corpo</label>
-    <input id="bodyInput" value="Recebemos sua transferência de R$ 19.000,00.">
-
-    <label>Quantidade</label>
-    <input id="amountInput" type="number" value="1" min="1">
-
-    <label>Delay entre notificações (ms)</label>
-    <input id="delayInput" type="number" value="1200">
-  </div>
+  <label>Intervalo (ms)</label>
+  <input id="delayInput" type="number" value="1000" />
 
   <button onclick="requestPermission()">Permitir Notificações</button>
   <button onclick="sendCustom()">Gerar Notificações</button>
 
+
   <script>
-    // Registra SW
+    // REGISTRA O SERVICE WORKER
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("sw.js");
+      navigator.serviceWorker.register("sw.js")
+      .catch(err => console.log("Erro SW:", err));
     }
 
-    // SALVAR ICONE NA <apple-touch-icon>
-    function saveIcon() {
-      const icon = document.getElementById("iconSelect").value;
-      document.getElementById("appIcon").setAttribute("href", icon);
-      localStorage.setItem("siteIcon", icon);
-      alert("Ícone salvo! (Se instalar na Tela Inicial, ele será usado)");
-    }
-
-    // Carregar ícone salvo ao abrir
-    const savedIcon = localStorage.getItem("siteIcon");
-    if (savedIcon) {
-      document.getElementById("appIcon").href = savedIcon;
-      document.getElementById("iconSelect").value = savedIcon;
-    }
-
+    // PEDIR PERMISSÃO
     function requestPermission() {
-      Notification.requestPermission().then(p => {
-        alert(p === "granted" ? "Permissão concedida!" : "Permissão negada!");
+      Notification.requestPermission().then(res => {
+        if (res === "granted") alert("Permissão concedida!");
+        else alert("Permissão negada.");
       });
     }
 
+    // ENVIAR NOTIFICAÇÕES
     function sendCustom() {
       const title = document.getElementById("titleInput").value;
       const body = document.getElementById("bodyInput").value;
       const icon = document.getElementById("iconSelect").value;
-      const total = parseInt(document.getElementById("amountInput").value);
-      const delay = parseInt(document.getElementById("delayInput").value);
+      const total = Number(document.getElementById("amountInput").value);
+      const delay = Number(document.getElementById("delayInput").value);
 
-      if (Notification.permission !== "granted") {
-        alert("Você precisa permitir as notificações primeiro.");
+      if (!title || !body) {
+        alert("Preencha título e corpo!");
         return;
       }
 
       let count = 0;
-      const interval = setInterval(() => {
+      const loop = setInterval(() => {
         navigator.serviceWorker.ready.then(reg => {
           reg.showNotification(title, {
             body: body,
@@ -122,10 +101,10 @@
         });
 
         count++;
-        if (count >= total) clearInterval(interval);
-
+        if (count >= total) clearInterval(loop);
       }, delay);
     }
   </script>
+
 </body>
 </html>
