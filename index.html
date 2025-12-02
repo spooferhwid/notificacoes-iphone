@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Gerador de Notificações</title>
-
+  <title>Gerador de Notificações iPhone</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -12,27 +11,19 @@
       margin: 20px auto;
       padding: 20px;
     }
-
     input, select {
       width: 100%;
       padding: 10px;
       margin: 10px 0;
     }
-
     button {
       width: 100%;
-      padding: 14px;
+      padding: 12px;
       background: black;
       color: white;
+      font-size: 17px;
       border: none;
       cursor: pointer;
-      font-size: 18px;
-      border-radius: 8px;
-      margin-top: 15px;
-    }
-
-    h2 {
-      margin-bottom: 5px;
     }
   </style>
 </head>
@@ -40,51 +31,46 @@
 
   <h2>Gerar Notificação iPhone</h2>
 
-  <label>Ícone da Notificação</label>
-  <select id="iconSelect">
-    <option value="icon1.png">Nubank</option>
-    <option value="icon2.png">PicPay</option>
-    <option value="icon3.png">Insta</option>
-  </select>
-
   <label>Título</label>
-  <input id="titleInput" placeholder="Ex: Transferência recebida" />
+  <input id="titleInput" placeholder="Ex: Instagram, Pix, Banco..." />
 
   <label>Corpo da Notificação</label>
-  <input id="bodyInput" placeholder="Ex: Recebemos sua transferência de R$ 19.000,00." />
+  <input id="bodyInput" placeholder="Ex: Você recebeu R$ 1.200,00" />
 
-  <label>Quantidade</label>
+  <label>Ícone</label>
+  <select id="iconSelect">
+    <option value="icon1.png">Nubank Icon</option>
+    <option value="icon2.png">Slot Vazio</option>
+    <option value="icon3.png">Slot Vazio</option>
+  </select>
+
+  <label>Quantas notificações?</label>
   <input id="amountInput" type="number" value="1" min="1" />
 
-  <label>Intervalo (ms)</label>
+  <label>Tempo entre notificações (ms)</label>
   <input id="delayInput" type="number" value="1000" />
 
   <button onclick="requestPermission()">Permitir Notificações</button>
+
   <button onclick="sendCustom()">Gerar Notificações</button>
 
-
   <script>
-    // REGISTRA O SERVICE WORKER
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("sw.js")
-      .catch(err => console.log("Erro SW:", err));
+      navigator.serviceWorker.register("sw.js");
     }
 
-    // PEDIR PERMISSÃO
     function requestPermission() {
-      Notification.requestPermission().then(res => {
-        if (res === "granted") alert("Permissão concedida!");
-        else alert("Permissão negada.");
+      Notification.requestPermission().then(p => {
+        alert(p === "granted" ? "Permissão concedida!" : "Permissão negada!");
       });
     }
 
-    // ENVIAR NOTIFICAÇÕES
     function sendCustom() {
       const title = document.getElementById("titleInput").value;
       const body = document.getElementById("bodyInput").value;
       const icon = document.getElementById("iconSelect").value;
-      const total = Number(document.getElementById("amountInput").value);
-      const delay = Number(document.getElementById("delayInput").value);
+      const total = parseInt(document.getElementById("amountInput").value);
+      const delay = parseInt(document.getElementById("delayInput").value);
 
       if (!title || !body) {
         alert("Preencha título e corpo!");
@@ -96,7 +82,7 @@
         navigator.serviceWorker.ready.then(reg => {
           reg.showNotification(title, {
             body: body,
-            icon: icon
+            icon: icon,
           });
         });
 
