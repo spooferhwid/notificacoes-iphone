@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Gerador de Notificações iPhone PWA</title>
+  <title>Gerador de Notificações Personalizadas PWA</title>
 
   <link rel="apple-touch-icon" sizes="180x180" href="icon1.png">
 
@@ -53,7 +53,7 @@
       width: 100%;
       padding: 15px;
       margin-top: 10px;
-      background: #007bff; /* Cor primária moderna */
+      background: #007bff;
       color: white;
       border: none;
       border-radius: 4px;
@@ -73,35 +73,41 @@
     }
 
     #permBtn {
-      background: black; /* Mantendo o estilo original para o botão de permissão */
+      background: black;
     }
 
     #permBtn:hover:not([disabled]) {
       background: #333;
     }
 
-    .success {
-      color: green;
+    .status {
       font-weight: bold;
       text-align: center;
       margin-top: 10px;
+      padding: 10px;
+      border-radius: 4px;
     }
+    
+    .status.success { color: green; background-color: #e6ffe6; }
+    .status.info { color: #007bff; background-color: #e6f7ff; }
+
   </style>
 </head>
 <body>
 
   <h2>Gerar Notificação Personalizada</h2>
+  <p style="text-align:center; font-size: 0.9em; color:#777;">* O nome do app será ocultado na notificação.</p>
 
-  <label for="titleInput">Título</label>
+  <label for="titleInput">Título da Notificação (Aparecerá em destaque)</label>
   <input id="titleInput" value="Transferência recebida" placeholder="Ex: Nubank, iFood" />
 
-  <label for="bodyInput">Corpo da Notificação</label>
+  <label for="bodyInput">Corpo Detalhado (Mensagem principal)</label>
   <input id="bodyInput" value="Recebemos sua transferência de R$ 19.000,00." placeholder="Mensagem principal" />
 
   <label for="iconSelect">Ícone do App (simulação)</label>
   <select id="iconSelect">
     <option value="icon1.png">Nubank (icon1.png)</option>
-    <option value="icon192.png">Opção 192 (icon192.png)</option>
+    <option value="icon2.png">PicPay (icon2.png)</option>
   </select>
 
   <label for="amountInput">Quantas notificações?</label>
@@ -113,14 +119,14 @@
   <button id="permBtn">Verificar / Permitir Notificações</button>
   <button id="sendBtn" disabled>Gerar Notificações</button>
 
-  <div id="statusMessage" class="success"></div>
+  <div id="statusMessage" class="status info"></div>
 
   <script>
     const permBtn = document.getElementById('permBtn');
     const sendBtn = document.getElementById('sendBtn');
     const statusMessage = document.getElementById('statusMessage');
 
-    // --- 1. Registro do Service Worker ---
+    // --- 1. Registro do Service Worker (PWA) ---
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js', { scope: './' })
         .then(() => console.log('SW registrado com sucesso.'))
@@ -128,36 +134,38 @@
     }
 
     // --- 2. Funções de Status ---
+    function setStatus(text, type = 'info') {
+        statusMessage.textContent = text;
+        statusMessage.className = `status ${type}`;
+    }
+
     function checkNotificationPermission() {
       const permission = Notification.permission;
       if (permission === 'granted') {
         sendBtn.disabled = false;
         permBtn.textContent = '✅ Permissão Concedida';
         permBtn.disabled = true;
-        statusMessage.textContent = 'Pronto para gerar notificações.';
+        setStatus('Pronto para gerar notificações.', 'success');
       } else if (permission === 'denied') {
         sendBtn.disabled = true;
         permBtn.textContent = '❌ Permissão Bloqueada';
         permBtn.disabled = true;
-        statusMessage.textContent = 'A permissão para notificação foi bloqueada.';
+        setStatus('A permissão para notificação foi bloqueada.', 'status');
       } else { // 'default'
         sendBtn.disabled = true;
         permBtn.textContent = 'Verificar / Permitir Notificações';
         permBtn.disabled = false;
-        statusMessage.textContent = 'Clique para solicitar permissão.';
+        setStatus('Clique para solicitar permissão.', 'info');
       }
     }
 
     // --- 3. Event Listeners ---
-
-    // Checa a permissão ao carregar a página
     window.addEventListener('load', checkNotificationPermission);
 
     permBtn.addEventListener('click', () => {
-      // Solicita a permissão APENAS se o estado não for "denied" ou "granted"
       if (Notification.permission === 'default') {
         Notification.requestPermission().then(() => {
-          checkNotificationPermission(); // Atualiza o estado após a resposta do usuário
+          checkNotificationPermission();
         });
       }
     });
@@ -168,31 +176,37 @@
           return;
       }
 
-      const title = document.getElementById('titleInput').value;
-      const body = document.getElementById('bodyInput').value;
+      // NOVO: Usamos esses inputs para construir o corpo da mensagem
+      const realTitle = document.getElementById('titleInput').value; 
+      const detailedBody = document.getElementById('bodyInput').value; 
       const icon = document.getElementById('iconSelect').value;
       const total = parseInt(document.getElementById('amountInput').value, 10) || 1;
       const delay = parseInt(document.getElementById('delayInput').value, 10) || 1000;
 
-      if (!title || !body) {
-        alert('Preencha título e corpo da notificação.');
+      if (!realTitle || !detailedBody) {
+        alert('Preencha o Título Real e o Corpo Detalhado.');
         return;
       }
       
+      // Concatena Título Real e Corpo Detalhado, usando quebra de linha (NOVO TRUQUE)
+      const finalNotificationBody = realTitle + '\n' + detailedBody;
+      
+      // O TÍTULO DA NOTIFICAÇÃO É VAZIO PARA EVITAR O NOME DO APP
+      const apiTitle = ''; 
+
       // Feedback visual
       sendBtn.disabled = true;
       sendBtn.textContent = '⏱️ Gerando... Aguarde.';
-      statusMessage.textContent = `Iniciando a geração de ${total} notificação(ões)...`;
+      setStatus(`Iniciando a geração de ${total} notificação(ões)...`, 'info');
 
       let count = 0;
       const timer = setInterval(() => {
         navigator.serviceWorker.ready.then(reg => {
-          // Garante que o Service Worker está pronto para mostrar a notificação
-          reg.showNotification(title, {
-            body: body,
+          reg.showNotification(apiTitle, { // Título Vazio
+            body: finalNotificationBody,     // Corpo com Título Real + Detalhe
             icon: icon,
-            badge: icon, // Icone que aparece no canto superior esquerdo (Android)
-            tag: 'custom-notif-' + Date.now() + '-' + count, // Tag única para empilhar, não substituir
+            badge: icon, 
+            tag: 'custom-notif-' + Date.now() + '-' + count, 
             timestamp: Date.now()
           });
         });
@@ -200,8 +214,7 @@
         count++;
         if (count >= total) {
           clearInterval(timer);
-          // Feedback de Conclusão e reabilitação do botão
-          statusMessage.textContent = `✅ Sucesso! ${total} notificação(ões) gerada(s).`;
+          setStatus(`✅ Sucesso! ${total} notificação(ões) gerada(s).`, 'success');
           sendBtn.textContent = 'Gerar Novas Notificações';
           sendBtn.disabled = false;
         }
