@@ -3,9 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Gerador de Notificações iPhone</title>
 
-  <!-- Removido título para iOS NÃO sobrescrever o título da notificação -->
-  <title></title>
+  <!-- ICON DINÂMICO AQUI -->
+  <link id="dynamicIcon" rel="apple-touch-icon" href="icon-nubank.png">
 
   <style>
     body {
@@ -14,68 +15,83 @@
       margin: 20px auto;
       padding: 20px;
     }
-
     input, select {
       width: 100%;
       padding: 10px;
-      margin: 12px 0;
+      margin: 10px 0;
     }
-
     button {
       width: 100%;
       padding: 14px;
-      background: #000;
-      color: #fff;
-      font-size: 18px;
+      background: black;
+      color: white;
+      font-size: 17px;
       border: none;
       cursor: pointer;
-      margin-top: 18px;
-      border-radius: 6px;
+      margin-top: 10px;
     }
-
-    h2 {
-      margin-bottom: 25px;
+    .info {
+      padding: 10px;
+      background: #efefef;
+      border-radius: 8px;
+      font-size: 15px;
+      margin-bottom: 20px;
     }
   </style>
 </head>
 <body>
 
-  <h2>Gerador de Notificações iPhone</h2>
+  <h2>Gerar Notificação iPhone</h2>
 
-  <label>Presets</label>
-  <select id="presetSelect" onchange="applyPreset()">
-    <option value="">Escolher...</option>
-    <option value="pix">Transferência Recebida - R$19.000</option>
-    <option value="bank">Compra Aprovada</option>
-    <option value="insta">DM do Instagram</option>
+  <div class="info">
+    Escolha o ícone antes de adicionar o site à Tela Inicial.  
+    O iPhone usará esse ícone como ícone do app.
+  </div>
+
+  <label>Ícone do App (Tela Inicial)</label>
+  <select id="iconSelector" onchange="changePwaIcon()">
+    <option value="icon1.png">Nubank</option>
+    <option value="icon2.png">PicPay</option>
+    <option value="icon3.png">Instagram</option>
   </select>
+
+  <hr>
 
   <label>Título</label>
-  <input id="titleInput" placeholder="Ex: Instagram, Pix, Banco..." />
+  <input id="titleInput" placeholder="Ex: Banco, Pix, Instagram..." />
 
-  <label>Corpo da Notificação</label>
+  <label>Corpo</label>
   <input id="bodyInput" placeholder="Ex: Você recebeu R$ 1.200,00" />
 
-  <label>Ícone</label>
-  <select id="iconSelect">
-    <option value="/icon1.png">Nubank Icon</option>
-    <option value="/icon2.png">PicPay Icon</option>
-    <option value="/icon3.png">Instagram Icon</option>
+  <label>Ícone da Notificação</label>
+  <select id="notifIconSelector">
+    <option value="icon1.png">Nubank</option>
+    <option value="icon2.png">PicPay</option>
+    <option value="icon3.png">Instagram</option>
   </select>
 
-  <label>Quantas notificações?</label>
-  <input id="amountInput" type="number" value="1" min="1" />
+  <label>Quantidade</label>
+  <input id="amountInput" type="number" value="1" min="1">
 
-  <label>Tempo entre notificações (ms)</label>
-  <input id="delayInput" type="number" value="1000" />
+  <label>Intervalo (ms)</label>
+  <input id="delayInput" type="number" value="1000">
 
   <button onclick="requestPermission()">Permitir Notificações</button>
-
   <button onclick="sendCustom()">Gerar Notificações</button>
 
   <script>
+
+    // Troca o ícone do PWA ANTES do usuário instalar na tela inicial
+    function changePwaIcon() {
+      const selected = document.getElementById("iconSelector").value;
+      const link = document.getElementById("dynamicIcon");
+      link.href = selected;
+
+      alert("Ícone alterado! Agora adicione o site à Tela Inicial.");
+    }
+
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js");
+      navigator.serviceWorker.register("sw.js");
     }
 
     function requestPermission() {
@@ -84,29 +100,10 @@
       });
     }
 
-    function applyPreset() {
-      const preset = document.getElementById("presetSelect").value;
-
-      if (preset === "pix") {
-        document.getElementById("titleInput").value = "Transferência Recebida";
-        document.getElementById("bodyInput").value = "Recebemos sua transferência de R$ 19.000,00.";
-      }
-
-      if (preset === "bank") {
-        document.getElementById("titleInput").value = "Compra aprovada";
-        document.getElementById("bodyInput").value = "Sua compra de R$ 1.299,99 foi aprovada.";
-      }
-
-      if (preset === "insta") {
-        document.getElementById("titleInput").value = "Instagram";
-        document.getElementById("bodyInput").value = "Novo pedido de mensagem.";
-      }
-    }
-
     function sendCustom() {
       const title = document.getElementById("titleInput").value;
       const body = document.getElementById("bodyInput").value;
-      const icon = document.getElementById("iconSelect").value;
+      const icon = document.getElementById("notifIconSelector").value;
       const total = parseInt(document.getElementById("amountInput").value);
       const delay = parseInt(document.getElementById("delayInput").value);
 
@@ -121,7 +118,6 @@
           reg.showNotification(title, {
             body: body,
             icon: icon,
-            badge: icon // força iOS a usar esse ícone
           });
         });
 
