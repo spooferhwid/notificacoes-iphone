@@ -14,9 +14,9 @@
   <!-- Manifest (PWA) -->
   <link rel="manifest" href="manifest.json">
 
-  <!-- Força o nome do app no iOS -->
+  <!-- REMOVEI o nome para NÃO aparecer nas notificações -->
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="Notificações">
+  <meta name="apple-mobile-web-app-title" content="">
   <meta name="theme-color" content="#000000">
 
   <style>
@@ -38,7 +38,7 @@
   <label>Ícone (atalho)</label>
   <select id="iconSelect">
     <option value="icon1.png">Nubank (icon1.png)</option>
-    <option value="icon192.png">Opção 192 (icon192.png)</option>
+    <option value="icon2.png">Opção 192 (icon192.png)</option>
   </select>
 
   <label>Quantas notificações?</label>
@@ -51,7 +51,6 @@
   <button id="sendBtn">Gerar Notificações</button>
 
   <script>
-    // registra SW
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js', { scope: './' })
         .then(() => console.log('SW registrado'))
@@ -79,7 +78,6 @@
       let count = 0;
       const timer = setInterval(() => {
         navigator.serviceWorker.ready.then(reg => {
-          // showNotification via SW
           reg.showNotification(title, {
             body: body,
             icon: icon,
