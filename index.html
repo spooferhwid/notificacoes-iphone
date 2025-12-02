@@ -4,6 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Gerador de Notificações iPhone</title>
+
+  <!-- Necessário para iOS reconhecer como app instalável -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -24,6 +29,7 @@
       font-size: 17px;
       border: none;
       cursor: pointer;
+      margin-top: 10px;
     }
   </style>
 </head>
@@ -32,16 +38,16 @@
   <h2>Gerar Notificação iPhone</h2>
 
   <label>Título</label>
-  <input id="titleInput" placeholder="Ex: Instagram, Pix, Banco..." />
+  <input id="titleInput" value="Transferência recebida" />
 
   <label>Corpo da Notificação</label>
-  <input id="bodyInput" placeholder="Ex: Você recebeu R$ 1.200,00" />
+  <input id="bodyInput" value="Recebemos sua transferência de R$ 19.000,00." />
 
   <label>Ícone</label>
   <select id="iconSelect">
-    <option value="icon1.png">Nubank Icon</option>
-    <option value="icon2.png">Slot Vazio</option>
-    <option value="icon3.png">Slot Vazio</option>
+    <option value="icon1.png">Nubank</option>
+    <option value="slot1.png">Slot 1</option>
+    <option value="slot2.png">Slot 2</option>
   </select>
 
   <label>Quantas notificações?</label>
@@ -51,17 +57,21 @@
   <input id="delayInput" type="number" value="1000" />
 
   <button onclick="requestPermission()">Permitir Notificações</button>
-
   <button onclick="sendCustom()">Gerar Notificações</button>
 
   <script>
+    // Registra SW corretamente no iOS
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("sw.js");
+      navigator.serviceWorker.register("sw.js", { scope: "./" });
     }
 
     function requestPermission() {
       Notification.requestPermission().then(p => {
-        alert(p === "granted" ? "Permissão concedida!" : "Permissão negada!");
+        if (p === "granted") {
+          alert("Permissão concedida!");
+        } else {
+          alert("Permissão negada.");
+        }
       });
     }
 
@@ -72,13 +82,9 @@
       const total = parseInt(document.getElementById("amountInput").value);
       const delay = parseInt(document.getElementById("delayInput").value);
 
-      if (!title || !body) {
-        alert("Preencha título e corpo!");
-        return;
-      }
-
       let count = 0;
-      const loop = setInterval(() => {
+
+      const interval = setInterval(() => {
         navigator.serviceWorker.ready.then(reg => {
           reg.showNotification(title, {
             body: body,
@@ -87,7 +93,7 @@
         });
 
         count++;
-        if (count >= total) clearInterval(loop);
+        if (count >= total) clearInterval(interval);
       }, delay);
     }
   </script>
