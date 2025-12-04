@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Gerador de Notificações Personalizadas PWA</title>
+  <title id="dynamicTitle">Escolha o título...</title>
 
   <link rel="apple-touch-icon" sizes="180x180" href="icon1.png">
 
@@ -126,14 +126,21 @@
     const sendBtn = document.getElementById('sendBtn');
     const statusMessage = document.getElementById('statusMessage');
 
-    // --- 1. Registro do Service Worker (PWA) ---
+    // --- Atualiza o título da aba automaticamente ---
+    const titleInput = document.getElementById("titleInput");
+    const dynamicTitle = document.getElementById("dynamicTitle");
+
+    titleInput.addEventListener("input", () => {
+      dynamicTitle.textContent = titleInput.value.trim() || "Escolha o título...";
+    });
+
+    // --- 1. Registro do Service Worker ---
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js', { scope: './' })
         .then(() => console.log('SW registrado com sucesso.'))
         .catch(err => console.error('Erro no registro do SW:', err));
     }
 
-    // --- 2. Funções de Status ---
     function setStatus(text, type = 'info') {
         statusMessage.textContent = text;
         statusMessage.className = `status ${type}`;
@@ -151,7 +158,7 @@
         permBtn.textContent = '❌ Permissão Bloqueada';
         permBtn.disabled = true;
         setStatus('A permissão para notificação foi bloqueada.', 'status');
-      } else { // 'default'
+      } else {
         sendBtn.disabled = true;
         permBtn.textContent = 'Verificar / Permitir Notificações';
         permBtn.disabled = false;
@@ -159,7 +166,6 @@
       }
     }
 
-    // --- 3. Event Listeners ---
     window.addEventListener('load', checkNotificationPermission);
 
     permBtn.addEventListener('click', () => {
@@ -176,7 +182,6 @@
           return;
       }
 
-      // NOVO: Usamos esses inputs para construir o corpo da mensagem
       const realTitle = document.getElementById('titleInput').value; 
       const detailedBody = document.getElementById('bodyInput').value; 
       const icon = document.getElementById('iconSelect').value;
@@ -188,13 +193,13 @@
         return;
       }
       
-      // Concatena Título Real e Corpo Detalhado, usando quebra de linha (NOVO TRUQUE)
-      const finalNotificationBody = realTitle + '\n' + detailedBody;
-      
-      // O TÍTULO DA NOTIFICAÇÃO É VAZIO PARA EVITAR O NOME DO APP
-      const apiTitle = ''; 
+      // Agora o título real será o título da notificação
+      const apiTitle = realTitle;
 
-      // Feedback visual
+      // Agora o corpo é SOMENTE o texto detalhado
+      const finalNotificationBody = detailedBody;
+
+
       sendBtn.disabled = true;
       sendBtn.textContent = '⏱️ Gerando... Aguarde.';
       setStatus(`Iniciando a geração de ${total} notificação(ões)...`, 'info');
@@ -202,11 +207,11 @@
       let count = 0;
       const timer = setInterval(() => {
         navigator.serviceWorker.ready.then(reg => {
-          reg.showNotification(apiTitle, { // Título Vazio
-            body: finalNotificationBody,     // Corpo com Título Real + Detalhe
+          reg.showNotification(apiTitle, {
+            body: finalNotificationBody,
             icon: icon,
-            badge: icon, 
-            tag: 'custom-notif-' + Date.now() + '-' + count, 
+            badge: icon,
+            tag: 'custom-notif-' + Date.now() + '-' + count,
             timestamp: Date.now()
           });
         });
